@@ -1,0 +1,144 @@
+------------------------------------------------------------------------------
+			Tema 2 - Paint Simulator
+------------------------------------------------------------------------------
+
+AUTOR
+  Smadu Razvan-Alexandru  315CB
+
+FISIERE INCLUSE
+  - paint_simulator.c
+  - makefile
+  - README
+
+README
+  Pregatiri pentru rezolvarea task-urilor
+    In program au fost implementate functii de alocare si stergere pentru 
+    matrici, verificare daca un numar este intr-un interval inchis si a fost
+    introdus un nou tip de date 'pixel' pentru a usura rezolvarea cerintelor.
+    Functia pixel** Initialize_Image(unsigned int, unsigned int) aloca memorie
+    pentru noua imagine. In cazul in care nu exista suficienta memorie pentru
+    a fi alocata pentru imagine, atunci functia goleste memoria deja alocata,
+    daca e cazul, (fiind o matrice, adica un "vector de vectori" se dezaloca 
+    fiecare vector in parte) si se returneaza NULL, fapt ce reprezinta esuarea
+    alocarii de memorie. 
+    Functia Free_Image(pixel***, unsigned int) dezaloca memoria pentru o
+    imagine si o pointeaza la NULL, pentru a indica faptul ca nu exista o 
+    imagine asociata pointerului respectiv.
+    Functia Is_Between_Min_Max(int, int, int) verifica daca un numar se afla
+    in intervalul [Min, Max] (valori date ca parametrii ale functiei). In 
+    cazul afirmativ se returneaza true (1), iar in caz negativ se returneaza 
+    false (0).
+    Tipul pixel (asa cum este precizat si in cerinta ca o recomandare) 
+    inregistreaza cele 3 culori pe care un pixel le are ((r)ed, (g)reen, 
+    (b)lue), pentru a usura lucrul cu matrici. Conform standardului RGB, 
+    culorile sunt de la 0 la 255, deci si inregistrarile vor fi de tip 
+    unsigned char pentru eficienta memoriei.
+    Constante definite: 
+      MIN_NUM_PX   - numarul minim de pixeli pe o linie/coloana (1)
+      MAX_NUM_PX   - numarul maxim de pixeli pe o linie/coloana (1024)
+      MAX_COLOR_PX - valoarea maxima a unei culori pe un canal (255)
+    Erori definite (conform cu cerinta):
+      EPERM  - modificare/afisare matrice neinitializata sau instructiune 
+               cu cod de operatie nespecificat (1)
+      EINVAL - parametru invalid (2)
+      ENOMEM - esuare alocare memorie (3)
+
+  Descrierea rezolvarii task-urilor
+    Task 1 - Initializarea pornind de la o imagine existenta
+      Pentru a nu exista memory leaks, se verifica prima oara daca exista
+      deja o poza in memorie, iar in cazul afirmativ aceasta sa fie stearsa.
+      Dupa citirea valorilor ce definesc lunginea si inaltimea imaginii, se 
+      verifica daca respecta cerintele date (sa fie intre 1 si 1024), iar 
+      daca aceste conditii nu sunt indeplinite, programul iese cu codul de
+      eroare EINVAL. Functia Create_Image(pixel**, unsigned int, unsigned int),
+      populeaza matricea cu valori date de la tastatura, de tip pixel, care 
+      sunt intre 0 si 255. Daca o valoare nu corespunde acestor cerinte, 
+      atunci se va iesi din program cu eroarea EINVAL.
+
+      Nota: Intrucat se verifica la inceput daca exista memorie alocata, 
+            nu mai este necesara stergerea ei cand programul iese cu eroarea
+            EINVAL (generata de dimensiunile imaginii) sau ENOMEM
+            (Initialize_Image() sterge memoria daca nu s-a putut aloca cat era
+            necesara).
+    
+    Task 2 - Crop
+      In functia Crop_Image(pixel***, unsigned int*, unsigned int*) se taie
+      imaginea dupa coordonatele citite de la tastatura (in cazul in care
+      aceste coordonate nu se afla in interiorul pozei, programul iese cu
+      EINVAL). Pentru rezolvarea acestui task se creaza o imagine temporara
+      care retine valorile noii imagini (se vor retine pixelii care trebuie sa 
+      se afle in imaginea transformata). In cazul in care nu se poate aloca 
+      memorie suplimentara, pentru a putea face operatia crop, atunci se iese
+      din program cu eroarea ENOMEM.
+    
+    Task 3 - Resize
+      Functia Resize_Image(pixel***, unsigned int*, unsigned int*) seamana cu
+      functia de la task-ul anterior, insa, atunci cand taie din imagine, o va
+      face din coltul din stanga sus corespunzator pixelului (0, 0). In plus
+      fata de Crop, functia de redimensionare poate si sa mareasca o poza, in 
+      limitele maxime acceptate (1024x1024), pixelii noi vor avea culoarea alb
+      (255, 255, 255). In cazul in care cerintele nu sunt respectate, se va 
+      inchide programul cu codul de eroare corespunzator.
+    
+    Task 4 - Coloreaza regiunea
+      In functia Color_Region(pixel**, unsigned int, unsigned int) se citesc
+      de la tastatura coordonatele celor 2 puncte diagonal opuse si, daca 
+      totul este in regula, se vor colora toti pixelii din acest dreptunghi 
+      creat. Se calculeaza lungimile noului dreptunghi si se atribuie fiecarui 
+      pixel, culoarea citita de la tastatura. In cazul in care datele de 
+      intrare nu sunt cele corespunzatoare, programul va iesi cu o eroare in 
+      functie de ce nu a fost indeplinit.
+    
+    Task 5 - Blur
+      Blur_Image(pixel***, unsigned int, unsigned int) calculeaza fiecare pixel
+      pentru a reda efectul de estompare. Pentru aceasta, sunt utilizati
+      2 pointer auxiliari, pe langa pointerul la imaginea propriu-zisa. 
+      **tmp_img are rolul de a retine adresa pozei initiale in memorie, si 
+      ulterior, a ultimei poze create. La fiecare pas din prima structura 
+      repetitiva, se calculeaza media aritmetica a culorilor pixelilor vecini, 
+      pe fiecare canal, iar rezultatul este retinut in **blur_img. Noua 
+      imagine va fi imaginea implicita, blur_img va pointa catre adresa pozei 
+      originale, iar tmp_img va pointa catre noua imagine. Acest lucru va 
+      permite o utilizare eficienta a memoriei, intrucat va fi nevoie de 
+      dimensiunea imaginii x 2 spatiu necesar, si de asemenea se poate evita 
+      fragmentarea excesiva a memoriei. In final se elibereaza memoria 
+      auxiliara utilizata in acest proces.
+    
+    Task 6 - Rotatie
+      Functia Rotate_Image(pixel***, unsigned int*, unsigned int*) realizeaza
+      cerintele acestui task. Se citeste de la tastatura numarul ce reprezinta 
+      de cate ori trebuie rotita poza, iar apoi, la fiecare pas se creaza o
+      noua imagine care va retine valorile vechii imagini calculate astfel:
+      Se transpune imaginea (coloanele devin linii, iar liniile devin coloane)
+      si se reflecta imaginea pe verticala (vertical flip). In final se 
+      elibereaza memoria care nu mai este necesara. Riscul fragmentarii 
+      excesive a memoriei este redus intrucat numarul maxim de rotatii este 3.
+    
+    Task 7 - Fill
+      Pentru rezolvarea acestui task au fost folosite 2 functii:
+      Change_Region_Color(pixel**, unsigned int, unsigned int, pixel, pixel, 
+      unsigned int, unsigned int) si Fill_Region(pixel**, unsigned int, 
+      unsigned int). In functia Fill_Region() se citeste punctul de start 
+      si culoarea regiunii, si se apeleaza functia recursiva 
+      Change_Region_Color(). Aceasta din urma, verifica daca vechea culoare
+      este egala cu noua culoare, caz in care se opreste recursivitatea; se 
+      verifica daca se mentine culoarea pixelului de initiere, si coloreza. 
+      Ulterior, se trece la pixelul vecin.
+    
+    Task 8 - Print
+      Functia Print_Image(pixel**, unsigned int, unsigned int) afiseaza pe prima
+      linie dimensiunea, in pixeli, a imaginii, iar pe liniile urmatoare 
+      afiseaza culorile, pe fiecare canal, de pe fiecare pixel. La finalul 
+      functiei se apeleaza fflush(stdout), deoarece in aceasta functie se afla 
+      singurul mesaj trimis la stdout, din tot programul, iar prin apelul 
+      fflush() se rezolva afisarea la stderr.
+
+    Task 9 - Exit
+      La operatia 0 se iese din structura repetitiva cu test final do...while 
+      si se elibereaza memoria la care pointeaza **image.
+  
+  Nota: Acolo unde a fost initalizata o imaginea, cand nu a mai fost nevoie de
+        ea, a fost stearsa din HEAP; la descrierea unor task-uri nu a mai fost
+        specificat acest lucru. De asemenea, daca exista neconcordante intre
+	valorile citite si cele care trebuie citite, se iese cu eroarea 
+	specifica.
